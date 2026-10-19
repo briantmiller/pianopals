@@ -1,0 +1,1049 @@
+<!doctype html>
+<html lang="en" data-pwa="1">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#191d48">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Piano Pals">
+<meta name="description" content="A play-along piano app for young children with falling notes that wait for every key.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>Piano Pals</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800&display=swap">
+<style>
+/* Layout: one-screen app. Home is a scrolling song shelf; the player is a night-sky waterfall stacked on a full-width keyboard, both sharing one horizontal frame so every falling note sits exactly over its key. Single committed look (night playroom), dark scheme. */
+:root{
+  --night:#191d48; --night-2:#232a6b; --panel:#2c3480; --panel-2:#3a43a0; --line:rgba(255,255,255,.14);
+  --ink:#fffaf0; --ink-soft:#c3c8f2; --sun:#ffd43b; --sun-ink:#3a2a00; --mint:#45d27a; --coral:#ff6b6b;
+  --key-white:#fbfaf6; --key-white-down:#e4e2f5; --key-black:#20203a; --key-black-down:#3d3d66;
+  --display:"Baloo 2","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;
+  --body:"Nunito","Avenir Next",system-ui,sans-serif;
+  --r-lg:22px; --r-md:14px;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--night);color:var(--ink);font-family:var(--body);font-weight:700;
+  overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;overflow:hidden}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation}
+button:focus-visible,input:focus-visible,label:focus-within{outline:3px solid var(--sun);outline-offset:3px}
+svg{display:block}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.05}
+
+/* ---------- Home ---------- */
+#home{height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:20px 56px;
+  background:
+    radial-gradient(2px 2px at 12% 18%,rgba(255,255,255,.5),transparent 60%),
+    radial-gradient(1.5px 1.5px at 78% 9%,rgba(255,255,255,.45),transparent 60%),
+    radial-gradient(2px 2px at 64% 31%,rgba(255,255,255,.3),transparent 60%),
+    radial-gradient(1.5px 1.5px at 33% 6%,rgba(255,255,255,.4),transparent 60%),
+    radial-gradient(1.5px 1.5px at 92% 26%,rgba(255,255,255,.35),transparent 60%),
+    var(--night)}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:30px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:14px}
+.brand-keys{display:flex;gap:3px;height:54px;align-items:flex-end}
+.brand-keys i{width:13px;border-radius:0 0 6px 6px;display:block}
+.brand h1{font-size:clamp(2.4rem,5vw,3.6rem);font-weight:800;letter-spacing:-.01em}
+.brand h1 span{color:var(--sun)}
+.status{display:flex;align-items:center;gap:8px;background:var(--panel);border-radius:999px;padding:8px 14px;font-size:.9rem;color:var(--ink-soft)}
+.status b{width:10px;height:10px;border-radius:50%;background:var(--ink-soft);opacity:.6}
+.status.on b{background:var(--mint);opacity:1;box-shadow:0 0 10px var(--mint)}
+.status.on{color:var(--ink)}
+.lead{font-size:clamp(1.15rem,2.2vw,1.45rem);color:var(--ink-soft);margin:-14px 0 0;max-width:40ch}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.sec-head h2{font-size:clamp(1.6rem,3vw,2.1rem)}
+.sec-head p{margin:0;color:var(--ink-soft);font-size:.95rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:18px}
+.card{position:relative;background:var(--panel);border-radius:var(--r-lg);display:flex;flex-direction:column;min-width:0;
+  box-shadow:0 6px 0 rgba(0,0,0,.25);transition:transform .15s}
+.card:active{transform:translateY(3px);box-shadow:0 3px 0 rgba(0,0,0,.25)}
+.card-play{display:flex;flex-direction:column;gap:10px;text-align:left;padding:18px 18px 16px;flex:1;border-radius:var(--r-lg)}
+.strip{display:flex;gap:5px;height:34px;align-items:flex-end}
+.strip i{flex:1;max-width:22px;border-radius:6px;display:block}
+.card h3{font-size:1.45rem;font-weight:800}
+.card p{margin:0;color:var(--ink-soft);font-size:.92rem;font-weight:600}
+.meta{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:4px}
+.chip{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.1)}
+.lvl-1{color:#9ff0bd}.lvl-2{color:#ffe27d}.lvl-3{color:#ffb0b0}
+.best{display:flex;gap:2px}
+.best svg{width:20px;height:20px;fill:rgba(255,255,255,.18)}
+.best svg.got{fill:var(--sun)}
+.card-actions{display:flex;gap:8px;padding:0 14px 14px}
+.mini{flex:1;background:rgba(255,255,255,.1);border-radius:12px;padding:9px 10px;font-size:.9rem;display:flex;align-items:center;justify-content:center;gap:6px}
+.mini svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.mini.danger{background:var(--coral);color:#3b0909}
+.add{border:3px dashed rgba(255,255,255,.3);background:transparent;box-shadow:none;align-items:center;justify-content:center;
+  min-height:190px;gap:10px;padding:18px;text-align:center;color:var(--ink-soft)}
+.add svg{width:46px;height:46px;fill:none;stroke:var(--sun);stroke-width:2.4;stroke-linecap:round}
+.add strong{font-family:var(--display);font-size:1.4rem;color:var(--ink)}
+.empty{color:var(--ink-soft);font-weight:600;margin:0;align-self:center}
+.grown{background:rgba(0,0,0,.18);border-radius:var(--r-lg);padding:20px 22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:22px;font-weight:600;color:var(--ink-soft)}
+.grown h2{font-size:1.4rem;color:var(--ink);margin-bottom:6px}
+.grown p{margin:0 0 8px;line-height:1.5;max-width:62ch}
+.grown strong{color:var(--ink)}
+.toggle{display:flex;align-items:center;gap:12px;cursor:pointer;color:var(--ink);padding:6px 0}
+.toggle input{appearance:none;-webkit-appearance:none;width:52px;height:30px;border-radius:999px;background:rgba(255,255,255,.2);position:relative;flex:none;cursor:pointer;margin:0;transition:background .2s}
+.toggle input::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s}
+.toggle input:checked{background:var(--mint)}
+.toggle input:checked::after{transform:translateX(22px)}
+.note-err{color:var(--coral)}
+
+/* ---------- Player ---------- */
+#player{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--night);
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.bar{display:flex;align-items:center;gap:10px;min-height:70px;flex-wrap:wrap;
+  padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));padding-block:8px}
+.btn{height:54px;min-width:54px;padding:0 16px;border-radius:16px;background:var(--panel);display:flex;align-items:center;justify-content:center;gap:8px;font-size:1.05rem;box-shadow:0 4px 0 rgba(0,0,0,.25)}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.25)}
+.btn svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.btn.on{background:var(--sun);color:var(--sun-ink)}
+.btn.sq{padding:0}
+.title-block{flex:1;min-width:160px;display:flex;flex-direction:column;gap:6px}
+.title-block h2{font-size:1.45rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prog{height:12px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--mint),var(--sun));border-radius:999px;transition:width .25s}
+.seg{display:flex;background:var(--panel);border-radius:16px;padding:4px;gap:4px;box-shadow:0 4px 0 rgba(0,0,0,.25)}
+.seg button{height:46px;padding:0 12px;border-radius:12px;display:flex;align-items:center;gap:6px;font-size:.95rem}
+.seg button svg{width:30px;height:22px}
+.seg button[aria-pressed="true"]{background:var(--sun);color:var(--sun-ink)}
+.frame{flex:1;display:flex;flex-direction:column;min-height:0;
+  padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
+.stage{position:relative;flex:1;min-height:120px;border-radius:20px 20px 0 0;overflow:hidden;
+  background:linear-gradient(180deg,#141838 0%,var(--night-2) 100%)}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%}
+.bubble{position:absolute;top:16px;left:50%;transform:translateX(-50%);background:var(--ink);color:#1d1f45;border-radius:999px;
+  padding:10px 22px 10px 12px;font-family:var(--display);font-weight:800;font-size:clamp(1.3rem,3vw,1.9rem);display:flex;align-items:center;gap:12px;
+  box-shadow:0 6px 0 rgba(0,0,0,.25);white-space:nowrap;pointer-events:none}
+.bubble .dot{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:#1d1f45;font-size:1.35rem;border:3px solid rgba(0,0,0,.12)}
+.cheer{position:absolute;top:34%;left:50%;transform:translate(-50%,-50%) scale(.6);font-family:var(--display);font-weight:800;
+  font-size:clamp(2.4rem,7vw,4.4rem);color:var(--sun);text-shadow:0 5px 0 rgba(0,0,0,.35);opacity:0;pointer-events:none}
+.cheer.pop{animation:pop 1s ease-out}
+@keyframes pop{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}70%{opacity:1;transform:translate(-50%,-60%) scale(1)}100%{opacity:0;transform:translate(-50%,-75%) scale(1)}}
+.overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:20px;text-align:center;
+  background:rgba(20,24,60,.72);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.overlay h2{font-size:clamp(2rem,5vw,3.2rem)}
+.overlay p{margin:0;color:var(--ink-soft);font-size:1.15rem;max-width:34ch}
+.big{height:78px;padding:0 40px;border-radius:24px;background:var(--sun);color:var(--sun-ink);font-family:var(--display);font-weight:800;font-size:2rem;
+  display:flex;align-items:center;gap:12px;box-shadow:0 7px 0 #b8901a}
+.big:active{transform:translateY(4px);box-shadow:0 3px 0 #b8901a}
+.big svg{width:34px;height:34px;fill:currentColor}
+.big.alt{background:var(--panel-2);color:var(--ink);box-shadow:0 7px 0 #1f2560;font-size:1.5rem;height:66px}
+.row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.won{display:flex;gap:10px}
+.won svg{width:clamp(56px,10vw,86px);height:clamp(56px,10vw,86px);fill:rgba(255,255,255,.15)}
+.won svg.got{fill:var(--sun);animation:star .6s backwards cubic-bezier(.3,1.6,.5,1)}
+.won svg.got:nth-child(2){animation-delay:.25s}.won svg.got:nth-child(3){animation-delay:.5s}
+@keyframes star{from{transform:scale(0) rotate(-40deg)}}
+.keys{position:relative;height:clamp(150px,31vh,290px);flex:none;background:#0f1233;border-top:5px solid #e04848;touch-action:none}
+.key{position:absolute;top:0;touch-action:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:12px;gap:6px;
+  font-family:var(--display);font-weight:800}
+.key.w{height:100%;background:var(--key-white);border-radius:0 0 12px 12px;box-shadow:inset 0 -10px 0 rgba(0,0,0,.08),inset -1px 0 0 rgba(0,0,0,.18);z-index:1;color:#26284a}
+.key.b{height:62%;background:var(--key-black);border-radius:0 0 9px 9px;z-index:2;box-shadow:inset 0 -8px 0 rgba(255,255,255,.08);color:#fff;padding-bottom:8px}
+.key.w.down{background:var(--key-white-down);box-shadow:inset 0 -4px 0 rgba(0,0,0,.08),inset -1px 0 0 rgba(0,0,0,.18)}
+.key.b.down{background:var(--key-black-down)}
+.key .kd{width:min(70%,34px);aspect-ratio:1;max-width:100%;border-radius:50%;display:grid;place-items:center;font-size:clamp(.8rem,1.8vw,1.25rem);color:#1d1f45}
+.key.b .kd{width:min(80%,24px);font-size:.75rem}
+.key .kn{font-size:clamp(.75rem,1.6vw,1.05rem);line-height:1}
+.hide-letters .key .kd{font-size:0}
+.key.target{animation:glow 1s ease-in-out infinite}
+.key.w.target{background:var(--tc)}
+.key.b.target{background:var(--tc)}
+@keyframes glow{50%{filter:brightness(1.25)}}
+.key.wrong{animation:nope .35s}
+@keyframes nope{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.key.good{filter:brightness(1.15)}
+
+/* ---------- Dialog ---------- */
+.modal{position:fixed;inset:0;background:rgba(10,12,35,.7);display:flex;align-items:center;justify-content:center;z-index:50;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px}
+.sheet{background:var(--panel);border-radius:24px;padding:24px;width:min(620px,100%);max-height:100%;overflow-y:auto;display:flex;flex-direction:column;gap:16px}
+.sheet h2{font-size:1.9rem}
+.sheet label.field{display:flex;flex-direction:column;gap:6px;color:var(--ink-soft);font-size:.95rem}
+.sheet input[type=text]{font:inherit;font-size:1.15rem;color:var(--ink);background:rgba(0,0,0,.25);border:2px solid var(--line);border-radius:12px;padding:12px 14px;-webkit-user-select:text;user-select:text}
+.parts{display:flex;flex-direction:column;gap:8px}
+.part{display:flex;align-items:center;gap:12px;background:rgba(0,0,0,.2);border-radius:14px;padding:12px 14px;cursor:pointer}
+.part input{width:26px;height:26px;accent-color:var(--sun);flex:none}
+.part div{min-width:0}
+.part strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.part small{color:var(--ink-soft);font-weight:600;font-variant-numeric:tabular-nums}
+.choice{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.choice button{background:rgba(0,0,0,.2);border-radius:14px;padding:12px;text-align:left;display:flex;flex-direction:column;gap:2px;border:2px solid transparent}
+.choice button small{color:var(--ink-soft);font-weight:600}
+.choice button[aria-pressed="true"]{border-color:var(--sun)}
+.sheet-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.sheet-actions .btn{height:50px}
+.btn.primary{background:var(--sun);color:var(--sun-ink)}
+.msg{margin:0;font-weight:600}
+@media (max-width:560px){.choice{grid-template-columns:1fr}.btn .lbl{display:none}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition:none!important}}
+</style>
+<style>*{box-sizing:border-box}body{margin:0;font-size:14px}[hidden]{display:none!important}</style>
+</head>
+<body>
+<main id="home" aria-label="Song library">
+  <div class="wrap">
+    <header class="top">
+      <div class="brand">
+        <div class="brand-keys" aria-hidden="true">
+          <i style="background:#ff5c5c;height:100%"></i><i style="background:#ff9a2e;height:82%"></i><i style="background:#ffd43b;height:64%"></i><i style="background:#45d27a;height:82%"></i><i style="background:#3fb6ff;height:100%"></i>
+        </div>
+        <h1>Piano <span>Pals</span></h1>
+      </div>
+      <div class="status" id="status-home"><b></b><span>Touch keys ready</span></div>
+    </header>
+    <p class="lead">Pick a song. The notes fall down and wait for you to find the right key.</p>
+
+    <section aria-labelledby="h-songs">
+      <div class="sec-head"><h2 id="h-songs">Songs to learn</h2><p>Classics from Bach, Beethoven, Brahms and nursery rhymes</p></div>
+      <div class="grid" id="builtin" style="margin-top:14px"></div>
+    </section>
+
+    <section aria-labelledby="h-mine">
+      <div class="sec-head"><h2 id="h-mine">My songs</h2><p>MIDI files you add are saved on this iPad</p></div>
+      <div class="grid" id="mine" style="margin-top:14px">
+        <button class="card add" id="add-btn" type="button">
+          <svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="20"/><path d="M24 15v18M15 24h18"/></svg>
+          <strong>Add a song</strong><span>Choose a .mid file</span>
+        </button>
+      </div>
+      <input type="file" id="file-in" accept=".mid,.midi,audio/midi,audio/x-midi" hidden>
+    </section>
+
+    <section class="grown" aria-labelledby="h-grown">
+      <div>
+        <h2 id="h-grown">For grown-ups</h2>
+        <p>Tap a song, press <strong>Start</strong>, and let your child play the glowing key. The music waits on every note, so there is no rush. <strong>Hear it</strong> plays the song first so they know the tune.</p>
+        <p>Install it: in Safari tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>. It then opens full screen and works offline.</p>
+      </div>
+      <div>
+        <h2>Real piano</h2>
+        <p id="midi-help">Checking for a plugged-in keyboard…</p>
+        <label class="toggle"><input type="checkbox" id="opt-mic"> Listen to a real piano with the microphone</label>
+        <p id="mic-msg" class="msg"></p>
+        <label class="toggle"><input type="checkbox" id="opt-sound"> Play sounds from the iPad</label>
+        <label class="toggle"><input type="checkbox" id="opt-letters"> Show letters on keys and notes</label>
+      </div>
+    </section>
+    <p style="margin:0;color:var(--ink-soft);font-size:.85rem;font-weight:600">Built-in songs are public-domain compositions, arranged as simple melodies for this app.</p>
+  </div>
+</main>
+
+<section id="player" hidden aria-label="Play along">
+  <div class="bar">
+    <button class="btn sq" id="back" type="button" aria-label="Back to songs"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div class="title-block"><h2 id="p-title">Song</h2><div class="prog"><i id="p-prog"></i></div></div>
+    <button class="btn" id="b-hear" type="button" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg><span class="lbl">Hear it</span></button>
+    <div class="seg" role="group" aria-label="Speed">
+      <button type="button" data-speed="0.5" aria-label="Slow"><svg viewBox="0 0 30 22" fill="currentColor"><path d="M6 15c0-5 4-9 9-9s9 4 9 9z"/><circle cx="26" cy="12" r="3"/><rect x="7" y="15" width="4" height="4" rx="2"/><rect x="18" y="15" width="4" height="4" rx="2"/></svg></button>
+      <button type="button" data-speed="0.75" aria-label="Medium"><svg viewBox="0 0 30 22" fill="currentColor"><circle cx="15" cy="12" r="7"/><circle cx="23" cy="7" r="3.5"/><circle cx="8" cy="18" r="2"/><circle cx="20" cy="19" r="2"/></svg></button>
+      <button type="button" data-speed="1" aria-label="Fast"><svg viewBox="0 0 30 22" fill="currentColor"><ellipse cx="13" cy="14" rx="8" ry="5"/><circle cx="22" cy="10" r="4"/><rect x="21" y="0" width="2.6" height="9" rx="1.3"/><rect x="24.5" y="1" width="2.6" height="8" rx="1.3"/></svg></button>
+    </div>
+    <button class="btn sq" id="b-restart" type="button" aria-label="Start over"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/></svg></button>
+    <button class="btn sq" id="b-pause" type="button" aria-label="Pause"><svg viewBox="0 0 24 24" id="pause-ico"><path d="M8 5v14M16 5v14"/></svg></button>
+  </div>
+  <div class="frame">
+    <div class="stage" id="stage">
+      <canvas id="cv"></canvas>
+      <div class="bubble" id="bubble" hidden></div>
+      <div class="cheer" id="cheer"></div>
+      <div class="overlay" id="ov-start">
+        <h2 id="ov-title">Ready?</h2>
+        <p>The notes stop and wait. Find the key that glows the same color.</p>
+        <div class="row">
+          <button class="big" id="go" type="button"><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></svg>Start</button>
+          <button class="big alt" id="go-hear" type="button">Hear it first</button>
+        </div>
+      </div>
+      <div class="overlay" id="ov-done" hidden>
+        <div class="won" id="won"></div>
+        <h2 id="done-title">You did it!</h2>
+        <p id="done-sub"></p>
+        <div class="row">
+          <button class="big" id="again" type="button">Play again</button>
+          <button class="big alt" id="pick" type="button">Pick a song</button>
+        </div>
+      </div>
+    </div>
+    <div class="keys" id="keys" aria-label="Piano keyboard"></div>
+  </div>
+</section>
+
+<div class="modal" id="modal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="m-title">
+    <h2 id="m-title">Add this song</h2>
+    <label class="field">Song name<input type="text" id="m-name" maxlength="60" autocomplete="off"></label>
+    <div class="field" style="display:flex;flex-direction:column;gap:6px;color:var(--ink-soft);font-size:.95rem">Parts to play
+      <div class="parts" id="m-parts"></div>
+    </div>
+    <div class="field" style="display:flex;flex-direction:column;gap:6px;color:var(--ink-soft);font-size:.95rem">Notes
+      <div class="choice">
+        <button type="button" id="m-melody" aria-pressed="true"><span>One at a time</span><small>Top note only. Best for ages 4–6</small></button>
+        <button type="button" id="m-all" aria-pressed="false"><span>All notes</span><small>Chords and both hands</small></button>
+      </div>
+    </div>
+    <p class="msg" id="m-msg"></p>
+    <div class="sheet-actions">
+      <button class="btn" id="m-cancel" type="button">Cancel</button>
+      <button class="btn" id="m-save" type="button">Save</button>
+      <button class="btn primary" id="m-play" type="button">Save and play</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const NAMES = ['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+const PC_COLOR = ['#ff5c5c','#e0474f','#ff9a2e','#e67c1c','#ffd43b','#45d27a','#2bb267','#3fb6ff','#2394dc','#8f8aff','#6f68ec','#d07bff'];
+const BLACK = new Set([1,3,6,8,10]);
+const STAR = '<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z"/></svg>';
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem('pp:'+k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem('pp:'+k, JSON.stringify(v)); }catch(e){} }
+};
+const settings = Object.assign({letters:true, speed:0.5, sound:true, mic:false}, store.get('settings', {}));
+const saveSettings = () => store.set('settings', settings);
+const best = store.get('best', {});
+const noteName = m => NAMES[((m % 12) + 12) % 12];
+const noteColor = m => PC_COLOR[((m % 12) + 12) % 12];
+const isBlack = m => BLACK.has(((m % 12) + 12) % 12);
+
+/* ---------------- Built-in songs (public domain melodies) ---------------- */
+function noteNum(s){
+  const mm = /^([A-G])([#b]?)(-?\d)$/.exec(s);
+  if(!mm) throw new Error('bad note ' + s);
+  const base = {C:0,D:2,E:4,F:5,G:7,A:9,B:11}[mm[1]];
+  return (parseInt(mm[3], 10) + 1) * 12 + base + (mm[2] === '#' ? 1 : mm[2] === 'b' ? -1 : 0);
+}
+function fromNotation(str, bpm){
+  const spb = 60 / bpm; let beat = 0; const notes = [];
+  for(const tok of str.trim().split(/\s+/)){
+    const [n, b] = tok.split(':');
+    const beats = b ? parseFloat(b) : 1;
+    if(n !== 'R') for(const p of n.split('+')) notes.push({m: noteNum(p), t: beat * spb, d: beats * spb * 0.92});
+    beat += beats;
+  }
+  return notes;
+}
+function prelude(){
+  const bars = [['C4','E4','G4','C5','E5'],['C4','D4','A4','D5','F5'],['B3','D4','G4','D5','F5'],['C4','E4','G4','C5','E5']];
+  const out = [];
+  for(const b of bars) for(let r = 0; r < 2; r++) out.push(...[0,1,2,3,4,2,3,4].map(i => b[i] + ':.5'));
+  return out.join(' ');
+}
+const BUILTIN = [
+  {id:'b-hotcross', title:'Hot Cross Buns', by:'Traditional', level:1, bpm:96,
+   n:'E4 D4 C4:2 E4 D4 C4:2 C4:.5 C4:.5 C4:.5 C4:.5 D4:.5 D4:.5 D4:.5 D4:.5 E4 D4 C4:2'},
+  {id:'b-mary', title:'Mary Had a Little Lamb', by:'Traditional', level:1, bpm:100,
+   n:'E4 D4 C4 D4 E4 E4 E4:2 D4 D4 D4:2 E4 G4 G4:2 E4 D4 C4 D4 E4 E4 E4 E4 D4 D4 E4 D4 C4:4'},
+  {id:'b-twinkle', title:'Twinkle, Twinkle, Little Star', by:'Traditional French melody', level:1, bpm:100,
+   n:'C4 C4 G4 G4 A4 A4 G4:2 F4 F4 E4 E4 D4 D4 C4:2 G4 G4 F4 F4 E4 E4 D4:2 G4 G4 F4 F4 E4 E4 D4:2 C4 C4 G4 G4 A4 A4 G4:2 F4 F4 E4 E4 D4 D4 C4:2'},
+  {id:'b-oldmac', title:'Old MacDonald', by:'Traditional', level:1, bpm:112,
+   n:'C4 C4 C4 G3 A3 A3 G3:2 E4 E4 D4 D4 C4:3 G3 C4 C4 C4 G3 A3 A3 G3:2 E4 E4 D4 D4 C4:4'},
+  {id:'b-jingle', title:'Jingle Bells', by:'James Lord Pierpont, 1857', level:2, bpm:124,
+   n:'E4 E4 E4:2 E4 E4 E4:2 E4 G4 C4:1.5 D4:.5 E4:4 F4 F4 F4:1.5 F4:.5 F4 E4 E4 E4:.5 E4:.5 E4 D4 D4 E4 D4:2 G4:2 E4 E4 E4:2 E4 E4 E4:2 E4 G4 C4:1.5 D4:.5 E4:4 F4 F4 F4:1.5 F4:.5 F4 E4 E4 E4:.5 E4:.5 G4 G4 F4 D4 C4:4'},
+  {id:'b-ode', title:'Ode to Joy', by:'Ludwig van Beethoven, 1824', level:2, bpm:104,
+   n:'E4 E4 F4 G4 G4 F4 E4 D4 C4 C4 D4 E4 E4:1.5 D4:.5 D4:2 E4 E4 F4 G4 G4 F4 E4 D4 C4 C4 D4 E4 D4:1.5 C4:.5 C4:2 D4 D4 E4 C4 D4 E4:.5 F4:.5 E4 C4 D4 E4:.5 F4:.5 E4 D4 C4 D4 G3:2 E4 E4 F4 G4 G4 F4 E4 D4 C4 C4 D4 E4 D4:1.5 C4:.5 C4:2'},
+  {id:'b-lullaby', title:'Lullaby (Wiegenlied)', by:'Johannes Brahms, 1868', level:2, bpm:104,
+   n:'E4:.5 E4:.5 G4:2 E4:.5 E4:.5 G4:2 E4:.5 G4:.5 C5:1.5 B4:.5 A4 A4 G4 D4:.5 E4:.5 F4 D4 D4:.5 E4:.5 F4:2 D4:.5 F4:.5 B4:.5 A4:.5 G4 B4 C5:2 C4:.5 C4:.5 C5:2 A4:.5 F4:.5 G4:2 E4:.5 C4:.5 F4 G4 A4 G4:2 C4:.5 C4:.5 C5:2 A4:.5 F4:.5 G4:2 E4:.5 C4:.5 F4 E4 D4 C4:3'},
+  {id:'b-minuet', title:'Minuet in G', by:'Christian Petzold (long credited to J. S. Bach)', level:3, bpm:120,
+   n:'D5 G4:.5 A4:.5 B4:.5 C5:.5 D5 G4 G4 E5 C5:.5 D5:.5 E5:.5 F#5:.5 G5 G4 G4 C5 D5:.5 C5:.5 B4:.5 A4:.5 B4 C5:.5 B4:.5 A4:.5 G4:.5 F#4 G4:.5 A4:.5 B4:.5 G4:.5 A4:3 D5 G4:.5 A4:.5 B4:.5 C5:.5 D5 G4 G4 E5 C5:.5 D5:.5 E5:.5 F#5:.5 G5 G4 G4 C5 D5:.5 C5:.5 B4:.5 A4:.5 B4 C5:.5 B4:.5 A4:.5 G4:.5 A4 B4:.5 A4:.5 G4:.5 F#4:.5 G4:3'},
+  {id:'b-elise', title:'Für Elise', by:'Ludwig van Beethoven, 1810', level:3, bpm:66,
+   n:'E5:.5 D#5:.5 E5:.5 D#5:.5 E5:.5 B4:.5 D5:.5 C5:.5 A4:1.5 C4:.5 E4:.5 A4:.5 B4:1.5 E4:.5 G#4:.5 B4:.5 C5:1.5 E4:.5 E5:.5 D#5:.5 E5:.5 D#5:.5 E5:.5 B4:.5 D5:.5 C5:.5 A4:1.5 C4:.5 E4:.5 A4:.5 B4:1.5 E4:.5 C5:.5 B4:.5 A4:3'},
+  {id:'b-prelude', title:'Prelude in C', by:'Johann Sebastian Bach, 1722', level:3, bpm:76, n: prelude()}
+];
+for(const s of BUILTIN) s.notes = fromNotation(s.n, s.bpm);
+
+/* ---------------- MIDI file parser ---------------- */
+function parseMidi(buf){
+  const d = new DataView(buf); const len = d.byteLength;
+  const str = (p, n) => { let s = ''; for(let i = 0; i < n; i++) s += String.fromCharCode(d.getUint8(p + i)); return s; };
+  if(len < 14 || str(0, 4) !== 'MThd') throw new Error('This file is not a MIDI file.');
+  const hlen = d.getUint32(4), ntr = d.getUint16(10), div = d.getUint16(12);
+  let p = 8 + hlen;
+  const tempos = []; const tracks = [];
+  let found = 0;
+  while(found < ntr && p + 8 <= len){
+    const id = str(p, 4), clen = d.getUint32(p + 4); p += 8;
+    const end = Math.min(p + clen, len);
+    if(id !== 'MTrk'){ p = end; continue; }
+    found++;
+    const tr = {name:'', notes:[], program:null, chans:new Set()};
+    const open = new Map(); let tick = 0, run = 0;
+    const vlq = () => { let v = 0, b; do{ b = d.getUint8(p++); v = (v << 7) | (b & 0x7f); }while((b & 0x80) && p < end); return v; };
+    try{
+      while(p < end){
+        tick += vlq();
+        let st = d.getUint8(p);
+        if(st & 0x80){ p++; if(st < 0xf0) run = st; } else { st = run; if(!st) break; }
+        if(st === 0xff){
+          const type = d.getUint8(p++); const l = vlq();
+          if(type === 0x51 && l >= 3) tempos.push({tick, us:(d.getUint8(p) << 16) | (d.getUint8(p+1) << 8) | d.getUint8(p+2)});
+          else if(type === 0x03 && !tr.name){ try{ tr.name = new TextDecoder().decode(new Uint8Array(buf, p, l)).replace(/\0/g,'').trim(); }catch(e){ tr.name = str(p, l).trim(); } }
+          p += l; if(type === 0x2f) break;
+        } else if(st === 0xf0 || st === 0xf7){ p += vlq(); }
+        else {
+          const type = st & 0xf0, ch = st & 0x0f;
+          const a = d.getUint8(p++);
+          const b = (type === 0xc0 || type === 0xd0) ? 0 : d.getUint8(p++);
+          const key = ch * 128 + a;
+          if(type === 0x90 && b > 0){
+            if(!open.has(key)) open.set(key, []);
+            open.get(key).push({tick, vel:b});
+          } else if(type === 0x80 || (type === 0x90 && b === 0)){
+            const q = open.get(key);
+            if(q && q.length){ const s = q.shift(); tr.notes.push({m:a, ch, on:s.tick, off:tick}); tr.chans.add(ch); }
+          } else if(type === 0xc0 && tr.program === null) tr.program = a;
+        }
+      }
+    }catch(e){ /* truncated track: keep what we have */ }
+    for(const [key, q] of open) for(const s of q) { tr.notes.push({m:key % 128, ch:Math.floor(key/128), on:s.tick, off:s.tick + 240}); tr.chans.add(Math.floor(key/128)); }
+    p = end; tracks.push(tr);
+  }
+  // tempo map
+  tempos.sort((x, y) => x.tick - y.tick);
+  let toSec;
+  if(div & 0x8000){
+    const fps = 256 - (div >> 8), tpf = div & 0xff;
+    toSec = t => t / (fps * tpf);
+  } else {
+    const tpq = div || 480;
+    const segs = [{tick:0, sec:0, us:500000}];
+    for(const tm of tempos){
+      const last = segs[segs.length - 1];
+      const sec = last.sec + (tm.tick - last.tick) * last.us / 1e6 / tpq;
+      if(tm.tick === last.tick) last.us = tm.us; else segs.push({tick:tm.tick, sec, us:tm.us});
+    }
+    toSec = t => { let s = segs[0]; for(let i = 1; i < segs.length && segs[i].tick <= t; i++) s = segs[i]; return s.sec + (t - s.tick) * s.us / 1e6 / tpq; };
+  }
+  const out = [];
+  tracks.forEach((tr, i) => {
+    if(!tr.notes.length) return;
+    const drums = tr.chans.size === 1 && tr.chans.has(9);
+    const notes = tr.notes.filter(n => n.ch !== 9).map(n => { const t = toSec(n.on); return {m:n.m, t, d:Math.max(0.08, toSec(n.off) - t)}; });
+    if(!notes.length) return;
+    notes.sort((x, y) => x.t - y.t || x.m - y.m);
+    out.push({index:i, name:tr.name, notes, drums});
+  });
+  if(!out.length) throw new Error('This MIDI file has no notes to play.');
+  return out;
+}
+
+function shapeNotes(notes, melody){
+  let list = notes.slice().sort((a, b) => a.t - b.t || b.m - a.m);
+  if(melody){
+    const keep = [];
+    for(const n of list){
+      const last = keep[keep.length - 1];
+      if(last && n.t - last.t < 0.06){ if(n.m > last.m) keep[keep.length - 1] = n; }
+      else keep.push(n);
+    }
+    list = keep;
+  }
+  if(!list.length) return [];
+  const t0 = list[0].t;
+  return list.map(n => ({m:n.m, t:n.t - t0, d:n.d}));
+}
+
+/* ---------------- Saved songs (IndexedDB) ---------------- */
+const DB = {
+  db:null, mem:[], ok:true,
+  open(){
+    return new Promise(res => {
+      try{
+        const r = indexedDB.open('piano-pals', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('songs', {keyPath:'id'});
+        r.onsuccess = () => { this.db = r.result; res(); };
+        r.onerror = () => { this.ok = false; res(); };
+      }catch(e){ this.ok = false; res(); }
+    });
+  },
+  req(mode, fn){
+    return new Promise((res, rej) => {
+      try{ const st = this.db.transaction('songs', mode).objectStore('songs'); const r = fn(st); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }
+      catch(e){ rej(e); }
+    });
+  },
+  async all(){ if(!this.db) return this.mem.slice(); try{ return await this.req('readonly', s => s.getAll()); }catch(e){ return this.mem.slice(); } },
+  async put(rec){ if(!this.db){ this.mem = this.mem.filter(r => r.id !== rec.id).concat(rec); return; } try{ await this.req('readwrite', s => s.put(rec)); }catch(e){ this.ok = false; this.mem = this.mem.filter(r => r.id !== rec.id).concat(rec); } },
+  async del(id){ this.mem = this.mem.filter(r => r.id !== id); if(this.db) try{ await this.req('readwrite', s => s.delete(id)); }catch(e){} }
+};
+const parsedCache = new Map();
+function recordSong(rec){
+  let tracks = parsedCache.get(rec.id);
+  if(!tracks){ tracks = parseMidi(rec.data); parsedCache.set(rec.id, tracks); }
+  const chosen = tracks.filter(t => rec.parts.includes(t.index));
+  const notes = shapeNotes(chosen.flatMap(t => t.notes), rec.melody);
+  const chords = notes.length - new Set(notes.map(n => n.t.toFixed(2))).size;
+  const level = rec.melody && notes.length <= 60 ? 1 : (!rec.melody && chords > 4) || notes.length > 140 ? 3 : 2;
+  return {id:rec.id, title:rec.name, by:rec.melody ? 'My song · one note at a time' : 'My song · all notes', level, notes, custom:true};
+}
+
+/* ---------------- Audio ---------------- */
+const Sound = {
+  ctx:null, out:null, voices:new Map(),
+  init(){
+    if(this.ctx){ if(this.ctx.state !== 'running') this.ctx.resume().catch(()=>{}); return; }
+    const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return;
+    try{ if(navigator.audioSession) navigator.audioSession.type = 'playback'; }catch(e){}
+    this.ctx = new AC();
+    const comp = this.ctx.createDynamicsCompressor();
+    this.out = this.ctx.createGain(); this.out.gain.value = 0.9;
+    this.out.connect(comp); comp.connect(this.ctx.destination);
+  },
+  on(m, vel = 0.85){
+    if(!this.ctx || !settings.sound) return;
+    this.off(m, true);
+    const c = this.ctx, t = c.currentTime, f = 440 * Math.pow(2, (m - 69) / 12);
+    const g = c.createGain(), lp = c.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.setValueAtTime(Math.min(9000, f * 9), t);
+    lp.frequency.exponentialRampToValueAtTime(Math.max(500, f * 2), t + 1.4);
+    const amp = 0.28 * vel;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(amp, t + 0.006);
+    g.gain.exponentialRampToValueAtTime(amp * 0.4, t + 0.35);
+    g.gain.exponentialRampToValueAtTime(0.0006, t + 3.4);
+    const oscs = [['triangle', 1, 1], ['sine', 2, 0.35], ['sine', 3, 0.12]].map(([type, mult, lvl]) => {
+      const o = c.createOscillator(), og = c.createGain();
+      o.type = type; o.frequency.value = f * mult; og.gain.value = lvl;
+      o.connect(og); og.connect(lp); o.start(t); o.stop(t + 3.5); return o;
+    });
+    lp.connect(g); g.connect(this.out);
+    this.voices.set(m, {g, oscs});
+  },
+  off(m, fast){
+    const v = this.voices.get(m); if(!v || !this.ctx) return;
+    this.voices.delete(m);
+    const t = this.ctx.currentTime;
+    try{
+      v.g.gain.cancelScheduledValues(t);
+      v.g.gain.setValueAtTime(Math.max(0.0006, v.g.gain.value), t);
+      v.g.gain.exponentialRampToValueAtTime(0.0006, t + (fast ? 0.04 : 0.45));
+      v.oscs.forEach(o => o.stop(t + 0.5));
+    }catch(e){}
+  },
+  chime(){
+    if(!this.ctx || !settings.sound) return;
+    [72, 76, 79, 84].forEach((m, i) => setTimeout(() => { this.on(m, 0.7); setTimeout(() => this.off(m), 500); }, i * 140));
+  }
+};
+
+/* ---------------- Keyboard ---------------- */
+const keysEl = $('#keys');
+let kb = {lo:60, hi:72, geom:{}, els:{}};
+function buildKeyboard(notes){
+  let mn = 60, mx = 67;
+  if(notes.length){ mn = Math.min(...notes.map(n => n.m)); mx = Math.max(...notes.map(n => n.m)); }
+  let lo = Math.floor(mn / 12) * 12, hi = Math.ceil((mx + 1) / 12) * 12; // hi = a C above
+  if(hi - lo < 12) hi = lo + 12;
+  if(mx - lo < 7 && lo - 12 >= 21 && mn - lo < 3) { /* keep */ }
+  const whites = []; for(let m = lo; m <= hi; m++) if(!isBlack(m)) whites.push(m);
+  const ww = 1 / whites.length, geom = {};
+  whites.forEach((m, i) => geom[m] = {x:i * ww, w:ww, black:false});
+  for(let m = lo; m <= hi; m++) if(isBlack(m)){ const right = geom[m + 1]; const bw = ww * 0.6; geom[m] = {x:right.x - bw / 2, w:bw, black:true}; }
+  kb = {lo, hi, geom, els:{}};
+  keysEl.innerHTML = '';
+  for(let m = lo; m <= hi; m++){
+    const g = geom[m], el = document.createElement('div');
+    el.className = 'key ' + (g.black ? 'b' : 'w');
+    el.style.left = (g.x * 100) + '%'; el.style.width = (g.w * 100) + '%';
+    el.dataset.m = m; el.style.setProperty('--tc', noteColor(m));
+    const nm = noteName(m);
+    el.innerHTML = `<span class="kd" style="background:${noteColor(m)}">${g.black ? '' : nm}</span>` + (!g.black && m % 12 === 0 && m === 60 ? '<span class="kn" aria-hidden="true">middle</span>' : '');
+    keysEl.appendChild(el); kb.els[m] = el;
+  }
+  document.body.classList.toggle('hide-letters', !settings.letters);
+}
+const pointers = new Map();
+keysEl.addEventListener('pointerdown', e => {
+  const k = e.target.closest('.key'); if(!k) return;
+  e.preventDefault();
+  const m = +k.dataset.m; pointers.set(e.pointerId, m);
+  noteOn(m, 'touch');
+});
+const release = e => { const m = pointers.get(e.pointerId); if(m == null) return; pointers.delete(e.pointerId); noteOff(m); };
+['pointerup','pointercancel'].forEach(t => window.addEventListener(t, release));
+keysEl.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('gesturestart', e => e.preventDefault());
+
+// computer keyboard (handy for testing on a laptop)
+const KEYMAP = 'awsedftgyhujkolp;'.split('');
+const held = new Set();
+window.addEventListener('keydown', e => {
+  if($('#player').hidden || e.repeat || e.metaKey || e.ctrlKey) return;
+  const i = KEYMAP.indexOf(e.key.toLowerCase()); if(i < 0) return;
+  const m = kb.lo + i; if(m > kb.hi) return;
+  held.add(m); noteOn(m, 'keys');
+});
+window.addEventListener('keyup', e => {
+  const i = KEYMAP.indexOf(e.key.toLowerCase()); if(i < 0) return;
+  const m = kb.lo + i; if(held.delete(m)) noteOff(m);
+});
+
+/* ---------------- Web MIDI ---------------- */
+let midiNames = [];
+function setStatus(){
+  const live = midiNames.length ? 'Piano: ' + midiNames[0] : settings.mic && Mic.running ? 'Listening to your piano' : 'Touch keys ready';
+  for(const el of [$('#status-home')]){ el.classList.toggle('on', !!midiNames.length || (settings.mic && Mic.running)); el.querySelector('span').textContent = live; }
+}
+async function initMidi(){
+  const help = $('#midi-help');
+  if(!navigator.requestMIDIAccess){
+    help.innerHTML = 'Safari on iPad does not let websites read <strong>USB or Bluetooth piano keyboards</strong> yet. Use the touch keys, turn on the microphone below to play along on a real piano, or open Piano Pals in a browser with Web MIDI (a Web MIDI browser app on iPad, or Chrome or Edge on a computer).';
+    return;
+  }
+  try{
+    const acc = await navigator.requestMIDIAccess();
+    const bind = () => {
+      midiNames = [];
+      acc.inputs.forEach(inp => { midiNames.push(inp.name || 'Keyboard'); inp.onmidimessage = onMidi; });
+      help.innerHTML = midiNames.length ? `Connected: <strong>${esc(midiNames.join(', '))}</strong>. Play along on the real keys.` : 'Plug in a USB or Bluetooth MIDI keyboard and it will connect by itself.';
+      setStatus();
+    };
+    acc.onstatechange = bind; bind();
+  }catch(e){ help.textContent = 'This browser blocked access to piano keyboards. The touch keys still work.'; }
+}
+function onMidi(e){
+  const [st, a, b] = e.data; const type = st & 0xf0;
+  if(type === 0x90 && b > 0) noteOn(a, 'midi', b / 127);
+  else if(type === 0x80 || (type === 0x90 && b === 0)) noteOff(a, 'midi');
+}
+
+/* ---------------- Microphone (real acoustic piano) ---------------- */
+const Mic = {
+  running:false, an:null, buf:null, stream:null, frame:0, lastNote:null, cand:null, candN:0, trough:1, armed:true,
+  async start(){
+    Sound.init();
+    if(!Sound.ctx) throw new Error('Audio is not available in this browser.');
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('This browser cannot use the microphone.');
+    this.stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false, noiseSuppression:false, autoGainControl:false}});
+    const src = Sound.ctx.createMediaStreamSource(this.stream);
+    this.an = Sound.ctx.createAnalyser(); this.an.fftSize = 2048; src.connect(this.an);
+    this.buf = new Float32Array(this.an.fftSize); this.running = true;
+  },
+  stop(){ this.running = false; if(this.stream) this.stream.getTracks().forEach(t => t.stop()); this.stream = null; },
+  tick(){
+    if(!this.running || (this.frame++ & 1)) return;
+    this.an.getFloatTimeDomainData(this.buf);
+    const sr = Sound.ctx.sampleRate, b = this.buf, n = b.length;
+    let rms = 0; for(let i = 0; i < n; i++) rms += b[i] * b[i]; rms = Math.sqrt(rms / n);
+    const thr = 0.012;
+    this.trough = Math.min(this.trough, rms);
+    if(rms > this.trough * 1.8 && rms > thr) this.armed = true;
+    if(rms < thr){ this.cand = null; this.candN = 0; if(rms < thr * 0.5) this.lastNote = null; return; }
+    const minLag = Math.floor(sr / 1400), maxLag = Math.min(Math.floor(sr / 60), n >> 1);
+    let bestLag = -1, bestC = 0; const c = new Float32Array(maxLag + 2);
+    for(let lag = minLag; lag <= maxLag + 1; lag++){ let s = 0; for(let i = 0; i < n - lag; i++) s += b[i] * b[i + lag]; c[lag] = s / (n - lag); }
+    let e0 = 0; for(let i = 0; i < n; i++) e0 += b[i] * b[i]; e0 /= n;
+    for(let lag = minLag + 1; lag <= maxLag; lag++) if(c[lag] > c[lag-1] && c[lag] >= c[lag+1] && c[lag] > bestC){ bestC = c[lag]; bestLag = lag; }
+    if(bestLag < 0 || bestC < e0 * 0.55) return;
+    // prefer the shortest lag with a strong peak (avoids octave-down errors)
+    for(let lag = minLag + 1; lag < bestLag; lag++) if(c[lag] > c[lag-1] && c[lag] >= c[lag+1] && c[lag] > bestC * 0.9){ bestLag = lag; break; }
+    const a = c[bestLag-1], bb = c[bestLag], cc = c[bestLag+1];
+    const shift = (a - cc) / (2 * (a - 2 * bb + cc) || 1);
+    const f = sr / (bestLag + (isFinite(shift) ? shift : 0));
+    const m = Math.round(69 + 12 * Math.log2(f / 440));
+    if(m < 21 || m > 108) return;
+    if(m === this.cand) this.candN++; else { this.cand = m; this.candN = 1; }
+    if(this.candN >= 2 && (m !== this.lastNote || this.armed)){
+      this.lastNote = m; this.armed = false; this.trough = rms;
+      noteOn(m, 'mic'); setTimeout(() => noteOff(m, 'mic'), 180);
+    }
+  }
+};
+
+/* ---------------- Player ---------------- */
+const cv = $('#cv'), ctx = cv.getContext('2d'), stageEl = $('#stage');
+let DPR = 1;
+const P = {song:null, steps:[], idx:0, cur:0, running:false, waiting:false, listen:false, misses:0, stepMiss:0, waitT:0, done:false, endT:0, particles:[], targets:'', cheerN:0};
+const LOOK = 2.6; // song-seconds visible above the line
+function buildSteps(notes){
+  const list = notes.map(n => ({...n})).sort((a, b) => a.t - b.t || a.m - b.m);
+  // squeeze long silences so little ones are never left waiting
+  let shift = 0, prevEnd = 0;
+  for(let i = 0; i < list.length; i++){
+    const n = list[i]; n.t -= shift;
+    if(i && n.t - prevEnd > 1.6){ const cut = n.t - prevEnd - 1.6; shift += cut; n.t -= cut; }
+    prevEnd = Math.max(prevEnd, n.t + Math.min(n.d, 1.2));
+  }
+  const steps = [];
+  for(const n of list){
+    const last = steps[steps.length - 1];
+    if(last && n.t - last.t < 0.06){ if(!last.need.has(n.m)){ last.notes.push(n); last.need.add(n.m); } }
+    else steps.push({t:n.t, notes:[n], need:new Set([n.m]), hit:new Set()});
+  }
+  // spacing for drawing: gap to next note of same pitch
+  const nextBy = {};
+  for(let i = list.length - 1; i >= 0; i--){ const n = list[i]; n.gap = nextBy[n.m] != null ? nextBy[n.m] - n.t : 99; nextBy[n.m] = n.t; }
+  return steps;
+}
+function openSong(song){
+  P.song = song; P.listen = false;
+  $('#p-title').textContent = song.title;
+  $('#ov-title').textContent = song.title;
+  $('#home').hidden = true; $('#player').hidden = false;
+  buildKeyboard(song.notes);
+  resize();
+  reset();
+  $('#ov-start').hidden = false; $('#ov-done').hidden = true;
+  updateSpeedUI();
+  requestAnimationFrame(loop0);
+}
+function reset(){
+  P.steps = buildSteps(P.song.notes);
+  P.idx = 0; P.misses = 0; P.stepMiss = 0; P.waitT = 0; P.done = false; P.waiting = false; P.particles = []; P.cheerN = 0;
+  P.cur = -LOOK * 0.95; P.running = false;
+  const last = P.steps[P.steps.length - 1];
+  P.endT = last ? last.t + Math.max(...last.notes.map(n => Math.min(n.d, 1.5))) : 0;
+  $('#p-prog').style.width = '0%';
+  $('#bubble').hidden = true;
+  $('#b-hear').classList.toggle('on', P.listen); $('#b-hear').setAttribute('aria-pressed', P.listen);
+  setTargets([]);
+  setPauseIcon();
+}
+function start(listen){
+  Sound.init();
+  P.listen = !!listen; reset(); P.running = true;
+  $('#ov-start').hidden = true; $('#ov-done').hidden = true;
+  setPauseIcon(); wake();
+}
+function setPauseIcon(){
+  $('#pause-ico').innerHTML = P.running ? '<path d="M8 5v14M16 5v14"/>' : '<path d="M7 4.5v15l12-7.5z" fill="currentColor"/>';
+  $('#b-pause').setAttribute('aria-label', P.running ? 'Pause' : 'Play');
+}
+let wakeLock = null;
+async function wake(){ try{ if(navigator.wakeLock && !wakeLock){ wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => wakeLock = null); } }catch(e){} }
+function sleep(){ try{ wakeLock && wakeLock.release(); }catch(e){} wakeLock = null; }
+
+function setTargets(ms){
+  const key = ms.join(','); if(key === P.targets) return; P.targets = key;
+  for(const el of keysEl.querySelectorAll('.target')) el.classList.remove('target');
+  for(const m of ms) kb.els[m] && kb.els[m].classList.add('target');
+}
+function showBubble(step){
+  const b = $('#bubble');
+  if(!step){ b.hidden = true; return; }
+  const left = [...step.need].filter(m => !step.hit.has(m));
+  b.innerHTML = 'Find ' + left.map(m => `<span class="dot" style="background:${noteColor(m)}">${settings.letters ? noteName(m) : ''}</span>`).join('');
+  b.hidden = false;
+}
+function cheer(word){
+  const c = $('#cheer'); c.textContent = word; c.classList.remove('pop'); void c.offsetWidth; c.classList.add('pop');
+}
+const CHEERS = ['Great!','Yay!','Super!','Nice!','Woo-hoo!','You got it!','Wow!'];
+
+function noteOn(m, src, vel){
+  Sound.init();
+  if(!(src === 'mic' || (src === 'midi' && !settings.sound))) Sound.on(m, vel || 0.85);
+  // in mic mode match any octave of the needed note
+  if(src === 'mic' && P.steps[P.idx]){
+    const want = [...P.steps[P.idx].need].find(x => (x - m) % 12 === 0 && !P.steps[P.idx].hit.has(x));
+    if(want != null) m = want;
+  }
+  const el = kb.els[m]; if(el) el.classList.add('down');
+  if($('#player').hidden || !P.running || P.listen || P.done) return;
+  const step = P.steps[P.idx]; if(!step) return;
+  const near = P.waiting || (step.t - P.cur) < 0.5;
+  if(step.need.has(m) && !step.hit.has(m) && near){
+    step.hit.add(m); burst(m);
+    if(el){ el.classList.add('good'); setTimeout(() => el.classList.remove('good'), 200); }
+    if(step.hit.size === step.need.size) completeStep();
+    else showBubble(step);
+  } else if(P.waiting && !step.need.has(m)){
+    P.misses++; P.stepMiss++;
+    if(el){ el.classList.remove('wrong'); void el.offsetWidth; el.classList.add('wrong'); }
+  }
+}
+function noteOff(m, src){
+  if(src !== 'mic') Sound.off(m);
+  for(const k of [m]) kb.els[k] && kb.els[k].classList.remove('down');
+  if(src === 'mic') for(const el of keysEl.querySelectorAll('.down')) if(!pointers.size && !held.size) el.classList.remove('down');
+}
+function completeStep(){
+  const step = P.steps[P.idx];
+  P.idx++; P.waiting = false; P.stepMiss = 0; P.waitT = 0;
+  $('#p-prog').style.width = (P.idx / P.steps.length * 100) + '%';
+  $('#bubble').hidden = true;
+  P.cheerN++;
+  if(P.idx < P.steps.length && (step.need.size > 1 || P.cheerN % 6 === 0)) cheer(CHEERS[Math.floor(Math.random() * CHEERS.length)]);
+}
+function finish(){
+  P.done = true; P.running = false; sleep(); setTargets([]); $('#bubble').hidden = true;
+  const won = $('#won');
+  if(P.listen){
+    won.innerHTML = '';
+    $('#done-title').textContent = 'Now you try!';
+    $('#done-sub').textContent = 'You heard the whole song. Press Play again to play it yourself.';
+    P.listen = false; $('#b-hear').classList.remove('on'); $('#b-hear').setAttribute('aria-pressed', 'false');
+  } else {
+    const rate = P.misses / Math.max(1, P.steps.length);
+    const stars = rate <= 0.1 ? 3 : rate <= 0.35 ? 2 : 1;
+    if((best[P.song.id] || 0) < stars){ best[P.song.id] = stars; store.set('best', best); }
+    won.innerHTML = [1,2,3].map(i => STAR.replace('<svg', `<svg class="${i <= stars ? 'got' : ''}"`)).join('');
+    $('#done-title').textContent = stars === 3 ? 'Superstar!' : stars === 2 ? 'Great playing!' : 'You did it!';
+    $('#done-sub').textContent = `You played all ${P.steps.length} notes of ${P.song.title}.`;
+    Sound.chime(); confetti();
+  }
+  setPauseIcon();
+  setTimeout(() => { $('#ov-done').hidden = false; }, 500);
+}
+
+function burst(m){
+  const g = kb.geom[m]; if(!g) return;
+  const x = (g.x + g.w / 2) * cv.width, y = cv.height - 6 * DPR, col = noteColor(m);
+  for(let i = 0; i < 16; i++){
+    const a = Math.PI + Math.random() * Math.PI, s = (2 + Math.random() * 5) * DPR;
+    P.particles.push({x, y, vx:Math.cos(a) * s, vy:Math.sin(a) * s, life:1, r:(3 + Math.random() * 4) * DPR, col});
+  }
+}
+function confetti(){
+  for(let i = 0; i < 120; i++) P.particles.push({x:Math.random() * cv.width, y:-Math.random() * cv.height * 0.4, vx:(Math.random() - 0.5) * 2 * DPR, vy:(1 + Math.random() * 3) * DPR, life:2.2, r:(4 + Math.random() * 5) * DPR, col:PC_COLOR[i % 12], sq:true});
+}
+
+function resize(){
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  const r = stageEl.getBoundingClientRect();
+  cv.width = Math.max(1, Math.round(r.width * DPR)); cv.height = Math.max(1, Math.round(r.height * DPR));
+}
+window.addEventListener('resize', () => { if(!$('#player').hidden) resize(); });
+
+function rr(x, y, w, h, r){
+  r = Math.min(r, w / 2, h / 2);
+  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+let lastTs = 0, looping = false;
+function loop0(ts){ if(looping) return; looping = true; lastTs = ts; requestAnimationFrame(loop); }
+function loop(ts){
+  if($('#player').hidden){ looping = false; return; }
+  const dt = Math.min(0.05, (ts - lastTs) / 1000); lastTs = ts;
+  Mic.tick();
+  if(P.running){
+    const step = P.steps[P.idx];
+    let next = P.cur + dt * settings.speed;
+    if(step){
+      if(P.listen){
+        if(next >= step.t){
+          for(const m of step.need){ Sound.on(m, 0.8); const el = kb.els[m]; if(el){ el.classList.add('down'); setTimeout(() => { el.classList.remove('down'); Sound.off(m); }, Math.max(150, Math.min(900, step.notes[0].d / settings.speed * 1000 * 0.9))); } burst(m); }
+          P.idx++; $('#p-prog').style.width = (P.idx / P.steps.length * 100) + '%';
+        }
+      } else if(next >= step.t && step.hit.size < step.need.size){
+        next = step.t;
+        if(!P.waiting){ P.waiting = true; showBubble(step); }
+        P.waitT += dt;
+      }
+    } else if(next > P.endT + 0.6 && !P.done) finish();
+    P.cur = next;
+    const s2 = P.steps[P.idx];
+    setTargets(!P.listen && s2 && (P.waiting || s2.t - P.cur < 0.5) ? [...s2.need].filter(m => !s2.hit.has(m)) : []);
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+function draw(){
+  const W = cv.width, H = cv.height; ctx.clearRect(0, 0, W, H);
+  const hitY = H - 6 * DPR, pps = (H - 10 * DPR) / LOOK;
+  // lanes
+  for(let m = kb.lo; m <= kb.hi; m++){
+    const g = kb.geom[m]; if(!g) continue;
+    if(g.black){ ctx.fillStyle = 'rgba(0,0,0,.16)'; ctx.fillRect(g.x * W, 0, g.w * W, H); }
+    else { ctx.fillStyle = m % 12 === 0 ? 'rgba(255,255,255,.16)' : 'rgba(255,255,255,.05)'; ctx.fillRect(Math.round(g.x * W), 0, Math.max(1, DPR * (m % 12 === 0 ? 1.5 : 1)), H); }
+  }
+  // notes
+  const fontPx = Math.round(Math.min(22, Math.max(11, (W / DPR) / ((kb.hi - kb.lo) * 0.6 + 4))) * DPR);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = `800 ${fontPx}px "Baloo 2", "Trebuchet MS", sans-serif`;
+  const from = Math.max(0, P.idx - 12);
+  for(let i = from; i < P.steps.length; i++){
+    const st = P.steps[i];
+    if(st.t - P.cur > LOOK + 0.2) break;
+    for(const n of st.notes){
+      const g = kb.geom[n.m]; if(!g) continue;
+      const bottom = hitY - (n.t - P.cur) * pps;
+      const maxH = Math.max(14 * DPR, n.gap * pps - 5 * DPR);
+      const h = Math.min(Math.max(n.d * pps, 34 * DPR), maxH);
+      const top = bottom - h; if(top > H || bottom < 0) continue;
+      const pad = (g.black ? 1.5 : 3) * DPR, x = g.x * W + pad, w = g.w * W - pad * 2;
+      const hit = st.hit.has(n.m) || (P.listen && i < P.idx);
+      ctx.globalAlpha = hit ? 0.28 : 1;
+      ctx.fillStyle = noteColor(n.m);
+      rr(x, top, w, h, Math.min(12 * DPR, w / 3)); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.28)'; rr(x + 3 * DPR, top + 3 * DPR, Math.max(2, w * 0.22), Math.max(2, h - 6 * DPR), 4 * DPR); ctx.fill();
+      if(g.black){ ctx.strokeStyle = 'rgba(20,20,40,.55)'; ctx.lineWidth = 2 * DPR; rr(x, top, w, h, Math.min(12 * DPR, w / 3)); ctx.stroke(); }
+      if(settings.letters && h > fontPx * 1.2 && w > fontPx * 0.7){ ctx.fillStyle = '#1d1f45'; ctx.fillText(noteName(n.m), x + w / 2, bottom - Math.min(h / 2, fontPx * 0.9)); }
+      ctx.globalAlpha = 1;
+    }
+  }
+  // hit line
+  const pulse = P.waiting ? 0.6 + 0.4 * Math.sin(performance.now() / 160) : 0.5;
+  ctx.fillStyle = `rgba(255,212,59,${0.25 + pulse * 0.4})`; ctx.fillRect(0, hitY - 2 * DPR, W, 6 * DPR);
+  // pointing arrow when stuck
+  if(P.waiting && (P.stepMiss >= 2 || P.waitT > 5)){
+    const st = P.steps[P.idx];
+    for(const m of st.need){ if(st.hit.has(m)) continue; const g = kb.geom[m]; if(!g) continue;
+      const cx = (g.x + g.w / 2) * W, bob = Math.sin(performance.now() / 180) * 8 * DPR, y = hitY - 70 * DPR + bob, s = 18 * DPR;
+      ctx.fillStyle = '#fffaf0'; ctx.beginPath(); ctx.moveTo(cx - s, y - s); ctx.lineTo(cx + s, y - s); ctx.lineTo(cx, y + s * 0.4); ctx.closePath(); ctx.fill();
+    }
+  }
+  // particles
+  for(let i = P.particles.length - 1; i >= 0; i--){
+    const p = P.particles[i];
+    p.x += p.vx; p.y += p.vy; p.vy += (p.sq ? 0.02 : 0.25) * DPR; p.life -= p.sq ? 0.006 : 0.03;
+    if(p.life <= 0 || p.y > H + 20){ P.particles.splice(i, 1); continue; }
+    ctx.globalAlpha = Math.min(1, p.life); ctx.fillStyle = p.col;
+    if(p.sq) ctx.fillRect(p.x, p.y, p.r, p.r * 0.6); else { ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283); ctx.fill(); }
+  }
+  ctx.globalAlpha = 1;
+}
+
+/* ---------------- Player controls ---------------- */
+$('#go').onclick = () => start(false);
+$('#go-hear').onclick = () => start(true);
+$('#again').onclick = () => start(false);
+$('#pick').onclick = goHome;
+$('#back').onclick = goHome;
+$('#b-restart').onclick = () => start(P.listen);
+$('#b-hear').onclick = () => start(!P.listen);
+$('#b-pause').onclick = () => {
+  if(P.done || !$('#ov-start').hidden) return start(false);
+  P.running = !P.running; setPauseIcon(); P.running ? wake() : sleep();
+};
+for(const b of document.querySelectorAll('[data-speed]')) b.onclick = () => { settings.speed = +b.dataset.speed; saveSettings(); updateSpeedUI(); };
+function updateSpeedUI(){ for(const b of document.querySelectorAll('[data-speed]')) b.setAttribute('aria-pressed', +b.dataset.speed === settings.speed); }
+function goHome(){
+  P.running = false; sleep();
+  for(const m of [...Sound.voices.keys()]) Sound.off(m);
+  $('#player').hidden = true; $('#home').hidden = false;
+  renderLibrary();
+}
+document.addEventListener('visibilitychange', () => { if(document.hidden && P.running){ P.running = false; setPauseIcon(); sleep(); } });
+
+/* ---------------- Library ---------------- */
+function card(s){
+  const el = document.createElement('article'); el.className = 'card';
+  const dots = s.notes.slice(0, 9).map(n => `<i style="background:${noteColor(n.m)};height:${40 + (n.m % 12) * 5}%"></i>`).join('');
+  const lv = ['', 'Easy', 'Medium', 'Tricky'][s.level] || 'Medium';
+  const got = best[s.id] || 0;
+  el.innerHTML = `<button class="card-play" type="button"><div class="strip" aria-hidden="true">${dots}</div><h3>${esc(s.title)}</h3><p>${esc(s.by)}</p>
+    <div class="meta"><span class="chip lvl-${s.level}">${lv}</span><span class="best" aria-label="${got} of 3 stars">${[1,2,3].map(i => STAR.replace('<svg', `<svg class="${i <= got ? 'got' : ''}"`)).join('')}</span></div></button>`;
+  el.querySelector('.card-play').onclick = () => openSong(s);
+  return el;
+}
+async function renderLibrary(){
+  const bi = $('#builtin'); bi.innerHTML = '';
+  for(const s of BUILTIN) bi.appendChild(card(s));
+  const mine = $('#mine');
+  for(const el of [...mine.children]) if(el.id !== 'add-btn') el.remove();
+  const recs = (await DB.all()).sort((a, b) => b.added - a.added);
+  for(const rec of recs){
+    let s; try{ s = recordSong(rec); }catch(e){ continue; }
+    const el = card(s);
+    const act = document.createElement('div'); act.className = 'card-actions';
+    const edit = `<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>`, bin = `<svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg>`;
+    const draw0 = () => { act.innerHTML = `<button class="mini" type="button" data-a="edit">${edit}Parts</button><button class="mini" type="button" data-a="del">${bin}Delete</button>`; };
+    draw0();
+    act.onclick = async e => {
+      const a = e.target.closest('button'); if(!a) return;
+      if(a.dataset.a === 'edit') openDialog(rec);
+      if(a.dataset.a === 'del') act.innerHTML = `<button class="mini" type="button" data-a="no">Keep it</button><button class="mini danger" type="button" data-a="yes">Delete song</button>`;
+      if(a.dataset.a === 'no') draw0();
+      if(a.dataset.a === 'yes'){ await DB.del(rec.id); parsedCache.delete(rec.id); renderLibrary(); }
+    };
+    el.appendChild(act);
+    mine.appendChild(el);
+  }
+  if(!recs.length){ const p = document.createElement('p'); p.className = 'empty'; p.textContent = 'No songs yet. Add a MIDI file from Files, iCloud Drive or a download.'; mine.appendChild(p); }
+  if(!DB.db){ const p = document.createElement('p'); p.className = 'empty note-err'; p.textContent = 'This browser can’t keep songs after you close it. Install Piano Pals to the Home Screen to save them.'; mine.appendChild(p); }
+}
+
+/* ---------------- Import dialog ---------------- */
+const modal = $('#modal');
+let draft = null;
+$('#add-btn').onclick = () => $('#file-in').click();
+$('#file-in').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ''; if(!f) return;
+  const data = await f.arrayBuffer();
+  let tracks;
+  try{ tracks = parseMidi(data); }
+  catch(err){ openDialog(null, err.message || 'This file could not be read. Try another .mid file.'); return; }
+  const id = 'u-' + Date.now().toString(36);
+  parsedCache.set(id, tracks);
+  const melodic = tracks.filter(t => !t.drums);
+  const pick = (melodic.length ? melodic : tracks).slice().sort((a, b) => b.notes.length - a.notes.length)[0];
+  openDialog({id, name:f.name.replace(/\.(mid|midi)$/i, '').replace(/[_-]+/g, ' ').trim() || 'My song', data, parts:[pick.index], melody:true, added:Date.now(), isNew:true});
+};
+function range(notes){ const lo = Math.min(...notes.map(n => n.m)), hi = Math.max(...notes.map(n => n.m)); const nm = m => noteName(m) + (Math.floor(m / 12) - 1); return nm(lo) + '–' + nm(hi); }
+function openDialog(rec, error){
+  draft = rec ? {...rec, parts:rec.parts.slice()} : null;
+  $('#m-msg').textContent = error || ''; $('#m-msg').className = 'msg' + (error ? ' note-err' : '');
+  const showForm = !!draft;
+  for(const id of ['#m-name','#m-save','#m-play']) $(id).closest('label, button').hidden = !showForm;
+  $('#m-parts').closest('.field').hidden = !showForm; $('#m-melody').closest('.field').hidden = !showForm;
+  $('#m-title').textContent = !draft ? 'That file didn’t work' : draft.isNew ? 'Add this song' : 'Choose parts';
+  $('#m-cancel').textContent = draft ? 'Cancel' : 'OK';
+  if(draft){
+    $('#m-name').value = draft.name;
+    const tracks = parsedCache.get(draft.id) || parseMidi(draft.data);
+    parsedCache.set(draft.id, tracks);
+    $('#m-parts').innerHTML = tracks.map((t, i) => `<label class="part"><input type="checkbox" id="part-${t.index}" value="${t.index}" ${draft.parts.includes(t.index) ? 'checked' : ''}>
+      <div><strong>${esc(t.name || 'Part ' + (i + 1))}${t.drums ? ' (drums)' : ''}</strong><small>${t.notes.length} notes · ${range(t.notes)}</small></div></label>`).join('');
+    setMelody(draft.melody);
+  }
+  modal.hidden = false;
+}
+function setMelody(v){ draft.melody = v; $('#m-melody').setAttribute('aria-pressed', v); $('#m-all').setAttribute('aria-pressed', !v); }
+$('#m-melody').onclick = () => setMelody(true);
+$('#m-all').onclick = () => setMelody(false);
+$('#m-cancel').onclick = () => { if(draft && draft.isNew) parsedCache.delete(draft.id); modal.hidden = true; draft = null; };
+async function commit(play){
+  const parts = [...$('#m-parts').querySelectorAll('input:checked')].map(i => +i.value);
+  if(!parts.length){ $('#m-msg').textContent = 'Pick at least one part to play.'; $('#m-msg').className = 'msg note-err'; return; }
+  const rec = {id:draft.id, name:$('#m-name').value.trim() || 'My song', data:draft.data, parts, melody:draft.melody, added:draft.added};
+  await DB.put(rec);
+  modal.hidden = true; draft = null;
+  await renderLibrary();
+  if(play) openSong(recordSong(rec));
+}
+$('#m-save').onclick = () => commit(false);
+$('#m-play').onclick = () => commit(true);
+
+/* ---------------- Settings ---------------- */
+const optSound = $('#opt-sound'), optLetters = $('#opt-letters'), optMic = $('#opt-mic');
+optSound.checked = settings.sound; optLetters.checked = settings.letters; optMic.checked = false;
+optSound.onchange = () => { settings.sound = optSound.checked; saveSettings(); };
+optLetters.onchange = () => { settings.letters = optLetters.checked; saveSettings(); document.body.classList.toggle('hide-letters', !settings.letters); };
+optMic.onchange = async () => {
+  const msg = $('#mic-msg'); msg.className = 'msg'; msg.textContent = '';
+  if(optMic.checked){
+    try{ await Mic.start(); settings.mic = true; msg.textContent = 'Listening. Play one key at a time, close to the iPad. App sounds stay quiet for notes it hears.'; }
+    catch(e){ optMic.checked = false; settings.mic = false; msg.className = 'msg note-err'; msg.textContent = 'The microphone isn’t available here. Install Piano Pals to the Home Screen and allow microphone access in Settings.'; }
+  } else { Mic.stop(); settings.mic = false; }
+  setStatus();
+};
+
+/* ---------------- Boot ---------------- */
+(async () => {
+  await DB.open();
+  renderLibrary();
+  initMidi();
+  setStatus();
+  if('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && document.documentElement.dataset.pwa === '1'){
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+})();
+})();
+</script>
+</body>
+</html>
