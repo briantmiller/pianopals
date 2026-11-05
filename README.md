@@ -35,10 +35,15 @@ To try it on a computer first: `python3 -m http.server 8000` in this folder, the
 
 ## Adding songs
 
-Tap **Add a song** and pick a `.mid` / `.midi` file. Choose which parts (tracks) to play and either **One at a time** (top note only, best for small hands) or **All notes**. Tap **Parts** on a saved song to change this later.
+Tap **Add a song** and pick a `.mid` / `.midi` file. The app splits the file into one part per instrument, leaves out drums, and pre-selects the part most likely to be the sung tune (marked **The tune**). It looks at track names (Melody, Vocal, Lead…), the instrument, whether the part plays one note at a time, and its pitch range. You can tick a different part if it guessed wrong.
 
-Free, legal MIDI files: Mutopia Project (mutopiaproject.org) and the IMSLP / Piano-midi.de public-domain collections.
+- **One at a time** keeps only the top note, which is best for small hands. **All notes** keeps chords.
+- **Move the tune to the middle of the keyboard** (on by default) shifts the song by whole octaves so it sits around middle C. The key and the tune stay the same.
+
+Tap **Parts** on a saved song to change these later.
+
+Pop and rock songs (for example Queen) are copyrighted, so they aren't built in. Buy licensed MIDI files from a store such as Musicnotes and add them this way. Free, legal MIDI files of classical music: Mutopia Project (mutopiaproject.org) and Piano-midi.de.
 
 ## Built-in songs
 
-Hot Cross Buns, Mary Had a Little Lamb, Twinkle Twinkle Little Star, Old MacDonald, Jingle Bells, Ode to Joy (Beethoven), Lullaby (Brahms), Minuet in G (Petzold, long credited to Bach), Für Elise (Beethoven), Prelude in C (Bach). All are public-domain compositions arranged as simple right-hand melodies for this app.
+Hot Cross Buns, Mary Had a Little Lamb, Twinkle Twinkle Little Star, Old MacDonald, Row Row Row Your Boat, London Bridge, Yankee Doodle, When the Saints Go Marching In, Camptown Races (Foster), Can-Can (Offenbach), Jingle Bells, Ode to Joy (Beethoven), Lullaby (Brahms), Minuet in G (Petzold, long credited to Bach), Für Elise (Beethoven), Prelude in C (Bach). All are public-domain compositions arranged as simple right-hand melodies for this app.

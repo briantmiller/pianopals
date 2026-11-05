@@ -175,6 +175,7 @@ h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.05}
 .part div{min-width:0}
 .part strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .part small{color:var(--ink-soft);font-weight:600;font-variant-numeric:tabular-nums}
+.tune{display:inline-block;margin-left:6px;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;background:var(--sun);color:var(--sun-ink);border-radius:999px;padding:2px 8px;vertical-align:2px}
 .choice{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .choice button{background:rgba(0,0,0,.2);border-radius:14px;padding:12px;text-align:left;display:flex;flex-direction:column;gap:2px;border:2px solid transparent}
 .choice button small{color:var(--ink-soft);font-weight:600}
@@ -203,7 +204,7 @@ h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.05}
     <p class="lead">Pick a song. The notes fall down and wait for you to find the right key.</p>
 
     <section aria-labelledby="h-songs">
-      <div class="sec-head"><h2 id="h-songs">Songs to learn</h2><p>Classics from Bach, Beethoven, Brahms and nursery rhymes</p></div>
+      <div class="sec-head"><h2 id="h-songs">Songs to learn</h2><p>Sing-alongs, marching tunes and classics from Bach and Beethoven</p></div>
       <div class="grid" id="builtin" style="margin-top:14px"></div>
     </section>
 
@@ -290,6 +291,7 @@ h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.05}
         <button type="button" id="m-all" aria-pressed="false"><span>All notes</span><small>Chords and both hands</small></button>
       </div>
     </div>
+    <label class="toggle" id="m-center-row"><input type="checkbox" id="m-center" checked> Move the tune to the middle of the keyboard</label>
     <p class="msg" id="m-msg"></p>
     <div class="sheet-actions">
       <button class="btn" id="m-cancel" type="button">Cancel</button>
@@ -351,6 +353,18 @@ const BUILTIN = [
    n:'C4 C4 G4 G4 A4 A4 G4:2 F4 F4 E4 E4 D4 D4 C4:2 G4 G4 F4 F4 E4 E4 D4:2 G4 G4 F4 F4 E4 E4 D4:2 C4 C4 G4 G4 A4 A4 G4:2 F4 F4 E4 E4 D4 D4 C4:2'},
   {id:'b-oldmac', title:'Old MacDonald', by:'Traditional', level:1, bpm:112,
    n:'C4 C4 C4 G3 A3 A3 G3:2 E4 E4 D4 D4 C4:3 G3 C4 C4 C4 G3 A3 A3 G3:2 E4 E4 D4 D4 C4:4'},
+  {id:'b-row', title:'Row, Row, Row Your Boat', by:'Traditional', level:1, bpm:100,
+   n:'C4:1.5 C4:1.5 C4 D4:.5 E4:1.5 E4 D4:.5 E4 F4:.5 G4:3 C5:.5 C5:.5 C5:.5 G4:.5 G4:.5 G4:.5 E4:.5 E4:.5 E4:.5 C4:.5 C4:.5 C4:.5 G4 F4:.5 E4 D4:.5 C4:3'},
+  {id:'b-london', title:'London Bridge', by:'Traditional', level:1, bpm:104,
+   n:'G4:1.5 A4:.5 G4 F4 E4 F4 G4:2 D4 E4 F4:2 E4 F4 G4:2 G4:1.5 A4:.5 G4 F4 E4 F4 G4:2 D4:2 G4:2 E4 C4:3'},
+  {id:'b-yankee', title:'Yankee Doodle', by:'Traditional American', level:1, bpm:108,
+   n:'C4 C4 D4 E4 C4 E4 D4 G3 C4 C4 D4 E4 C4:2 B3:2 C4 C4 D4 E4 F4 E4 D4 C4 B3 G3 A3 B3 C4:2 C4:2'},
+  {id:'b-saints', title:'When the Saints Go Marching In', by:'Traditional spiritual', level:2, bpm:120,
+   n:'C4 E4 F4 G4:4 C4 E4 F4 G4:4 C4 E4 F4 G4:2 E4:2 C4:2 E4:2 D4:4 E4 E4 D4 C4:3 C4 E4 G4:2 G4 F4:3 E4 F4 G4:2 E4:2 C4:2 D4:2 C4:4'},
+  {id:'b-camptown', title:'Camptown Races', by:'Stephen Foster, 1850', level:2, bpm:100,
+   n:'G4:.5 G4:.5 E4:.5 G4:.5 A4:.5 G4:.5 E4 E4:.5 D4:1.5 E4:.5 D4:1.5 G4:.5 G4:.5 E4:.5 G4:.5 A4:.5 G4:.5 E4 D4:.5 D4:.5 E4:.5 D4:.5 C4:2'},
+  {id:'b-cancan', title:'Can-Can', by:'Jacques Offenbach, 1858', level:2, bpm:84,
+   n:'C4:2 D4:.5 F4:.5 E4:.5 D4:.5 G4 G4 G4:.5 A4:.5 E4:.5 F4:.5 D4 D4 D4:.5 F4:.5 E4:.5 D4:.5 C4:.5 C5:.5 B4:.5 A4:.5 G4:.5 F4:.5 E4:.5 D4:.5 C4:2 D4:.5 F4:.5 E4:.5 D4:.5 G4 G4 G4:.5 A4:.5 E4:.5 F4:.5 D4 D4 D4:.5 F4:.5 E4:.5 D4:.5 C4:.5 G4:.5 D4:.5 E4:.5 C4:2'},
   {id:'b-jingle', title:'Jingle Bells', by:'James Lord Pierpont, 1857', level:2, bpm:124,
    n:'E4 E4 E4:2 E4 E4 E4:2 E4 G4 C4:1.5 D4:.5 E4:4 F4 F4 F4:1.5 F4:.5 F4 E4 E4 E4:.5 E4:.5 E4 D4 D4 E4 D4:2 G4:2 E4 E4 E4:2 E4 E4 E4:2 E4 G4 C4:1.5 D4:.5 E4:4 F4 F4 F4:1.5 F4:.5 F4 E4 E4 E4:.5 E4:.5 G4 G4 F4 D4 C4:4'},
   {id:'b-ode', title:'Ode to Joy', by:'Ludwig van Beethoven, 1824', level:2, bpm:104,
@@ -379,7 +393,7 @@ function parseMidi(buf){
     const end = Math.min(p + clen, len);
     if(id !== 'MTrk'){ p = end; continue; }
     found++;
-    const tr = {name:'', notes:[], program:null, chans:new Set()};
+    const tr = {name:'', notes:[], programs:{}, chans:new Set()};
     const open = new Map(); let tick = 0, run = 0;
     const vlq = () => { let v = 0, b; do{ b = d.getUint8(p++); v = (v << 7) | (b & 0x7f); }while((b & 0x80) && p < end); return v; };
     try{
@@ -404,7 +418,7 @@ function parseMidi(buf){
           } else if(type === 0x80 || (type === 0x90 && b === 0)){
             const q = open.get(key);
             if(q && q.length){ const s = q.shift(); tr.notes.push({m:a, ch, on:s.tick, off:tick}); tr.chans.add(ch); }
-          } else if(type === 0xc0 && tr.program === null) tr.program = a;
+          } else if(type === 0xc0 && tr.programs[ch] == null) tr.programs[ch] = a;
         }
       }
     }catch(e){ /* truncated track: keep what we have */ }
@@ -428,16 +442,60 @@ function parseMidi(buf){
     toSec = t => { let s = segs[0]; for(let i = 1; i < segs.length && segs[i].tick <= t; i++) s = segs[i]; return s.sec + (t - s.tick) * s.us / 1e6 / tpq; };
   }
   const out = [];
+  // one part per instrument: a track that mixes channels (common in pop MIDI files) is split by channel; drums are dropped
   tracks.forEach((tr, i) => {
-    if(!tr.notes.length) return;
-    const drums = tr.chans.size === 1 && tr.chans.has(9);
-    const notes = tr.notes.filter(n => n.ch !== 9).map(n => { const t = toSec(n.on); return {m:n.m, t, d:Math.max(0.08, toSec(n.off) - t)}; });
-    if(!notes.length) return;
-    notes.sort((x, y) => x.t - y.t || x.m - y.m);
-    out.push({index:i, name:tr.name, notes, drums});
+    const chans = [...new Set(tr.notes.map(n => n.ch))].filter(c => c !== 9).sort((a, b) => a - b);
+    const split = chans.length > 1;
+    for(const ch of chans.length ? (split ? chans : [chans[0]]) : []){
+      const notes = tr.notes.filter(n => n.ch === ch).map(n => { const t = toSec(n.on); return {m:n.m, t, d:Math.max(0.08, toSec(n.off) - t)}; });
+      if(!notes.length) continue;
+      notes.sort((x, y) => x.t - y.t || x.m - y.m);
+      const prog = tr.programs[ch] != null ? tr.programs[ch] : null;
+      const inst = prog != null ? GM_FAMILY[prog >> 3] : '';
+      const name = split ? (tr.name ? tr.name + ' · ' : '') + (inst || 'Channel ' + (ch + 1)) : tr.name;
+      out.push({index: split ? 1000 + i * 16 + ch : i, name, inst, prog, notes, drums:false});
+    }
   });
   if(!out.length) throw new Error('This MIDI file has no notes to play.');
   return out;
+}
+const GM_FAMILY = ['Piano','Bells','Organ','Guitar','Bass','Strings','Strings','Brass','Sax','Flute','Synth lead','Synth pad','Synth effects','World','Percussion','Sound effects'];
+
+/* Guess which part is the tune people sing: named like a melody, one note at a time, in the singing range, not a bass or pad. */
+const MELODY_RX = /melod|vocal|voice|vox|lead|sing|tune|solo|treble|soprano|right|\brh\b|whistle|flute/i;
+const BACKING_RX = /drum|perc|bass|pad|chord|accomp|\bcomp\b|left|\blh\b|rhythm|harmony|backing|string|arp/i;
+function melodyScore(t){
+  const ns = t.notes; let s = 0;
+  if(MELODY_RX.test(t.name || '')) s += 6;
+  if(BACKING_RX.test(t.name || '')) s -= 4;
+  if(t.prog != null){
+    if(t.prog >= 32 && t.prog <= 39) s -= 6;      // bass
+    else if(t.prog >= 88 && t.prog <= 103) s -= 3; // pads and effects
+    else if((t.prog >= 52 && t.prog <= 54) || (t.prog >= 64 && t.prog <= 87)) s += 2; // voices, reeds, pipes, leads
+    else if(t.prog >= 48 && t.prog <= 55) s -= 1;  // ensembles
+  }
+  let stacked = 0; for(let i = 1; i < ns.length; i++) if(ns[i].t - ns[i-1].t < 0.06) stacked++;
+  const chordy = stacked / ns.length;
+  s += (1 - chordy) * 6; if(chordy > 0.3) s -= 3;
+  const ms = ns.map(n => n.m).sort((a, b) => a - b), med = ms[ms.length >> 1];
+  if(med >= 60 && med <= 90) s += 3; else if(med < 52) s -= 4;
+  if(ns.length < 16) s -= 4;
+  return s + Math.min(1.5, ns.length / 300);
+}
+function pickMelody(tracks){ return tracks.slice().sort((a, b) => melodyScore(b) - melodyScore(a))[0]; }
+
+/* Move a tune by whole octaves so it sits around middle C, where small hands reach it. The key stays the same. */
+function centerNotes(notes){
+  if(!notes.length) return notes;
+  const ms = notes.map(n => n.m).sort((a, b) => a - b), med = ms[ms.length >> 1];
+  let shift = 0, bestScore = Infinity;
+  for(let k = -4; k <= 4; k++){
+    const sh = k * 12; let outside = 0;
+    for(const m of ms) if(m + sh < 53 || m + sh > 88) outside++;
+    const sc = outside * 10 + Math.abs(med + sh - 66);
+    if(sc < bestScore){ bestScore = sc; shift = sh; }
+  }
+  return shift ? notes.map(n => ({...n, m:n.m + shift})) : notes;
 }
 
 function shapeNotes(notes, melody){
@@ -483,8 +541,10 @@ const parsedCache = new Map();
 function recordSong(rec){
   let tracks = parsedCache.get(rec.id);
   if(!tracks){ tracks = parseMidi(rec.data); parsedCache.set(rec.id, tracks); }
-  const chosen = tracks.filter(t => rec.parts.includes(t.index));
-  const notes = shapeNotes(chosen.flatMap(t => t.notes), rec.melody);
+  let chosen = tracks.filter(t => rec.parts.includes(t.index));
+  if(!chosen.length) chosen = [pickMelody(tracks)];
+  let notes = shapeNotes(chosen.flatMap(t => t.notes), rec.melody);
+  if(rec.center !== false) notes = centerNotes(notes);
   const chords = notes.length - new Set(notes.map(n => n.t.toFixed(2))).size;
   const level = rec.melody && notes.length <= 60 ? 1 : (!rec.melody && chords > 4) || notes.length > 140 ? 3 : 2;
   return {id:rec.id, title:rec.name, by:rec.melody ? 'My song · one note at a time' : 'My song · all notes', level, notes, custom:true};
@@ -980,9 +1040,8 @@ $('#file-in').onchange = async e => {
   catch(err){ openDialog(null, err.message || 'This file could not be read. Try another .mid file.'); return; }
   const id = 'u-' + Date.now().toString(36);
   parsedCache.set(id, tracks);
-  const melodic = tracks.filter(t => !t.drums);
-  const pick = (melodic.length ? melodic : tracks).slice().sort((a, b) => b.notes.length - a.notes.length)[0];
-  openDialog({id, name:f.name.replace(/\.(mid|midi)$/i, '').replace(/[_-]+/g, ' ').trim() || 'My song', data, parts:[pick.index], melody:true, added:Date.now(), isNew:true});
+  const pick = pickMelody(tracks);
+  openDialog({id, name:f.name.replace(/\.(mid|midi)$/i, '').replace(/[_-]+/g, ' ').trim() || 'My song', data, parts:[pick.index], melody:true, center:true, added:Date.now(), isNew:true});
 };
 function range(notes){ const lo = Math.min(...notes.map(n => n.m)), hi = Math.max(...notes.map(n => n.m)); const nm = m => noteName(m) + (Math.floor(m / 12) - 1); return nm(lo) + '–' + nm(hi); }
 function openDialog(rec, error){
@@ -990,16 +1049,19 @@ function openDialog(rec, error){
   $('#m-msg').textContent = error || ''; $('#m-msg').className = 'msg' + (error ? ' note-err' : '');
   const showForm = !!draft;
   for(const id of ['#m-name','#m-save','#m-play']) $(id).closest('label, button').hidden = !showForm;
-  $('#m-parts').closest('.field').hidden = !showForm; $('#m-melody').closest('.field').hidden = !showForm;
+  $('#m-parts').closest('.field').hidden = !showForm; $('#m-melody').closest('.field').hidden = !showForm; $('#m-center-row').hidden = !showForm;
   $('#m-title').textContent = !draft ? 'That file didn’t work' : draft.isNew ? 'Add this song' : 'Choose parts';
   $('#m-cancel').textContent = draft ? 'Cancel' : 'OK';
   if(draft){
     $('#m-name').value = draft.name;
     const tracks = parsedCache.get(draft.id) || parseMidi(draft.data);
     parsedCache.set(draft.id, tracks);
+    if(!tracks.some(t => draft.parts.includes(t.index))) draft.parts = [pickMelody(tracks).index];
+    const tune = pickMelody(tracks).index;
     $('#m-parts').innerHTML = tracks.map((t, i) => `<label class="part"><input type="checkbox" id="part-${t.index}" value="${t.index}" ${draft.parts.includes(t.index) ? 'checked' : ''}>
-      <div><strong>${esc(t.name || 'Part ' + (i + 1))}${t.drums ? ' (drums)' : ''}</strong><small>${t.notes.length} notes · ${range(t.notes)}</small></div></label>`).join('');
+      <div><strong>${esc(t.name || t.inst || 'Part ' + (i + 1))}${t.index === tune ? ' <span class="tune">The tune</span>' : ''}</strong><small>${t.inst && t.name && !t.name.includes(t.inst) ? esc(t.inst) + ' · ' : ''}${t.notes.length} notes · ${range(t.notes)}</small></div></label>`).join('');
     setMelody(draft.melody);
+    $('#m-center').checked = draft.center !== false;
   }
   modal.hidden = false;
 }
@@ -1010,7 +1072,7 @@ $('#m-cancel').onclick = () => { if(draft && draft.isNew) parsedCache.delete(dra
 async function commit(play){
   const parts = [...$('#m-parts').querySelectorAll('input:checked')].map(i => +i.value);
   if(!parts.length){ $('#m-msg').textContent = 'Pick at least one part to play.'; $('#m-msg').className = 'msg note-err'; return; }
-  const rec = {id:draft.id, name:$('#m-name').value.trim() || 'My song', data:draft.data, parts, melody:draft.melody, added:draft.added};
+  const rec = {id:draft.id, name:$('#m-name').value.trim() || 'My song', data:draft.data, parts, melody:draft.melody, center:$('#m-center').checked, added:draft.added};
   await DB.put(rec);
   modal.hidden = true; draft = null;
   await renderLibrary();
